@@ -12,6 +12,7 @@ async def test_carry_skip_adder(dut):
     cocotb.start_soon(clock.start())
 
     # Reset the design
+    dut.sum.value = 0
     dut.rst_n.value = 0
     await ClockCycles(dut.clk, 5)  # Wait for 5 clock cycles with reset active
     dut.rst_n.value = 1

@@ -48,7 +48,7 @@ module tt_um_carryskip_adder8 (
 );
 
     wire [7:0] a, b;
-    wire [7:0] sum;
+    reg [7:0] sum;
     wire cin = 0; // Initial carry-in is 0
 
     assign a = ui_in;         // 'a' input from ui_in
@@ -65,17 +65,21 @@ module tt_um_carryskip_adder8 (
     // Second 4-bit block (upper half)
     wire [3:0] sum_upper;
     wire c7; // Carry out from the upper block
-    wire skip_cin = p_lower ? cin : c3; // Use skip logic for carry-in
+    wire skip_cin = p_lower ? c3 : cin; // Use skip logic for carry-in
     ripplemod ripple_upper (a[7:4], b[7:4], skip_cin, sum_upper, c7);
 
-    // Assign the final outputs
-    assign sum = {sum_upper, sum_lower};
+    // Register sum and apply reset logic
+    always @(posedge clk or negedge rst_n) begin
+        if (!rst_n)
+            sum <= 8'b0;  // Reset sum to 0
+        else
+            sum <= {sum_upper, sum_lower};
+    end
 
     assign uo_out = sum;      // Assign the sum to output
     assign uio_out = 8'b00000000;
     assign uio_oe = 8'b00000000;
 endmodule
-
 
 module ripplemod(a, b, cin, sum, cout);
     input [3:0] a, b;

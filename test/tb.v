@@ -22,7 +22,7 @@ module tb ();
   // Clock generation
   initial begin
     clk = 0;
-    forever #5 clk = ~clk; // 100 MHz clock
+    forever #10 clk = ~clk; // 100 MHz clock
   end
 
   // Declare power supply signals

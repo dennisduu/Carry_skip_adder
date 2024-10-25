@@ -1,4 +1,3 @@
-# SPDX-FileCopyrightText: © 2024 Tiny Tapeout
 # SPDX-License-Identifier: Apache-2.0
 
 import cocotb
@@ -20,8 +19,9 @@ async def test_project(dut):
     dut.ui_in.value = 0
     dut.uio_in.value = 0
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)
+    await ClockCycles(dut.clk, 10)  # Reset for 10 clock cycles
     dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 2)   # Ensure release of reset
 
     dut._log.info("Test project behavior")
 
@@ -29,8 +29,8 @@ async def test_project(dut):
     dut.ui_in.value = 20  # 20 in decimal
     dut.uio_in.value = 30  # 30 in decimal
 
-    # Wait for one clock cycle to see the output values
-    await ClockCycles(dut.clk, 1)
+    # Wait for two clock cycles to see the output values
+    await ClockCycles(dut.clk, 2)
 
     # The following assertion is just an example of how to check the output values.
     # Change it to match the actual expected output of your module:
@@ -42,13 +42,13 @@ async def test_project(dut):
         (1, 1, 2),
         (15, 15, 30),
         (127, 127, 254),
-        (255, 255, 254),  # Since 255 + 255 = 510, but 8-bit sum results in 254 (overflow ignored)
+        (255, 255, 254),  # 8-bit sum overflow example
     ]
 
     for a, b, expected_sum in test_vectors:
         dut.ui_in.value = a
         dut.uio_in.value = b
-        await ClockCycles(dut.clk, 1)
+        await ClockCycles(dut.clk, 2)
         assert dut.uo_out.value == expected_sum, f"For inputs {a} and {b}, expected {expected_sum} but got {int(dut.uo_out.value)}"
         dut._log.info(f"Test passed for inputs {a} and {b}, output {int(dut.uo_out.value)}")
 

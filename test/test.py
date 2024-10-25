@@ -1,59 +1,55 @@
+# SPDX-FileCopyrightText: © 2024 Tiny Tapeout
+# SPDX-License-Identifier: Apache-2.0
+
 import cocotb
 from cocotb.clock import Clock
 from cocotb.triggers import ClockCycles
-import random
+
 
 @cocotb.test()
-async def test_carry_skip_adder(dut):
-    dut._log.info("Starting carry-skip adder test")
+async def test_project(dut):
+    dut._log.info("Start")
 
-    # Set up the clock with a period of 10 us (100 KHz)
+    # Set the clock period to 10 us (100 KHz)
     clock = Clock(dut.clk, 10, units="us")
     cocotb.start_soon(clock.start())
 
-    # Reset the design
-    dut.sum.value = 0
+    # Reset
+    dut._log.info("Reset")
+    dut.ena.value = 1
+    dut.ui_in.value = 0
+    dut.uio_in.value = 0
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 5)  # Wait for 5 clock cycles with reset active
+    await ClockCycles(dut.clk, 10)
     dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 5)  # Wait for 5 clock cycles after releasing reset
 
-    dut._log.info("Testing initial conditions")
+    dut._log.info("Test project behavior")
 
-    # Set the initial input values to test a basic addition
-    dut.a.value = 5    # Example initial value for a
-    dut.b.value = 3    # Example initial value for b
+    # Set the input values you want to test
+    dut.ui_in.value = 20  # 20 in decimal
+    dut.uio_in.value = 30  # 30 in decimal
 
-    # Wait for 20 clock cycles to see the output values
-    await ClockCycles(dut.clk, 20)
+    # Wait for one clock cycle to see the output values
+    await ClockCycles(dut.clk, 1)
 
-    # Calculate and log the expected sum
-    expected_sum = (5 + 3) & 0xF  # Sum is masked to 4 bits
-    dut._log.info(f"Initial test: a=5, b=3, sum={dut.sum.value} (Expected: {expected_sum})")
+    # The following assertion is just an example of how to check the output values.
+    # Change it to match the actual expected output of your module:
+    assert dut.uo_out.value == 50, f"Expected 50 but got {int(dut.uo_out.value)}"
 
-    # Assert to check if the output matches the expected sum
-    assert dut.sum.value == expected_sum, f"Initial test failed: expected sum={expected_sum}, got {dut.sum.value}"
+    # Additional tests
+    test_vectors = [
+        (0, 0, 0),
+        (1, 1, 2),
+        (15, 15, 30),
+        (127, 127, 254),
+        (255, 255, 254),  # Since 255 + 255 = 510, but 8-bit sum results in 254 (overflow ignored)
+    ]
 
-    # Add 10 random test cases
-    for i in range(10):
-        # Generate random values for a and b within the 4-bit range (0 to 15)
-        a = random.randint(0, 15)
-        b = random.randint(0, 15)
+    for a, b, expected_sum in test_vectors:
+        dut.ui_in.value = a
+        dut.uio_in.value = b
+        await ClockCycles(dut.clk, 1)
+        assert dut.uo_out.value == expected_sum, f"For inputs {a} and {b}, expected {expected_sum} but got {int(dut.uo_out.value)}"
+        dut._log.info(f"Test passed for inputs {a} and {b}, output {int(dut.uo_out.value)}")
 
-        # Set the random input values
-        dut.a.value = a
-        dut.b.value = b
-
-        # Wait for 20 clock cycles to settle
-        await ClockCycles(dut.clk, 20)
-
-        # Calculate the expected 4-bit sum
-        expected_sum = (a + b) & 0xF  # Masking sum to 4 bits
-
-        # Log the values for debugging
-        dut._log.info(f"Test {i + 1}: a={a}, b={b}, sum={dut.sum.value} (Expected: {expected_sum})")
-
-        # Assert to check if the output matches the expected values
-        assert dut.sum.value == expected_sum, f"Test {i + 1} failed for a={a}, b={b}: expected sum={expected_sum}, got {dut.sum.value}"
-
-    dut._log.info("All tests passed.")
+    dut._log.info("All tests passed")

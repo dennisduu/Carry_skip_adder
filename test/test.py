@@ -7,9 +7,15 @@ import random
 async def test_carry_skip_adder(dut):
     dut._log.info("Starting carry-skip adder test")
 
-    # Set the clock period to 10 us (100 KHz)
+    # Set up the clock with a period of 10 us (100 KHz)
     clock = Clock(dut.clk, 10, units="us")
     cocotb.start_soon(clock.start())
+
+    # Reset the design
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 5)  # Wait for 5 clock cycles with reset active
+    dut.rst_n.value = 1
+    await ClockCycles(dut.clk, 5)  # Wait for 5 clock cycles after releasing reset
 
     dut._log.info("Testing initial conditions")
 
@@ -17,8 +23,8 @@ async def test_carry_skip_adder(dut):
     dut.a.value = 5    # Example initial value for a
     dut.b.value = 3    # Example initial value for b
 
-    # Wait for 10 clock cycles to see the output values
-    await ClockCycles(dut.clk, 10)
+    # Wait for 20 clock cycles to see the output values
+    await ClockCycles(dut.clk, 20)
 
     # Calculate and log the expected sum
     expected_sum = (5 + 3) & 0xF  # Sum is masked to 4 bits
@@ -37,8 +43,8 @@ async def test_carry_skip_adder(dut):
         dut.a.value = a
         dut.b.value = b
 
-        # Wait for 10 clock cycles to settle
-        await ClockCycles(dut.clk, 10)
+        # Wait for 20 clock cycles to settle
+        await ClockCycles(dut.clk, 20)
 
         # Calculate the expected 4-bit sum
         expected_sum = (a + b) & 0xF  # Masking sum to 4 bits

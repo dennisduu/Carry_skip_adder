@@ -12,8 +12,8 @@ module tt_um_carryskip_adder8 (
 );
 
     wire [7:0] a, b;
-    reg [7:0] sum;
-    wire cout, cout0, cout1, skip;
+    reg [7:0] sum;  // Declare sum as reg for procedural assignment
+    wire cout0, cout1, skip;
 
     assign a = ui_in;
     assign b = uio_in;
@@ -42,27 +42,39 @@ module tt_um_carryskip_adder8 (
 endmodule
 
 // Ripple Carry Adder - 4 bits
-module RCA4(output [3:0] sum, output cout, input [3:0] a, b, input cin);
-    wire [2:0] c;
+module RCA4(output wire [3:0] sum, output wire cout, input wire [3:0] a, b, input wire cin);
+
+    wire [2:0] c;  // Internal carry wires
+
     fulladd fa0 (.sum(sum[0]), .cout(c[0]), .a(a[0]), .b(b[0]), .cin(cin));
     fulladd fa1 (.sum(sum[1]), .cout(c[1]), .a(a[1]), .b(b[1]), .cin(c[0]));
     fulladd fa2 (.sum(sum[2]), .cout(c[2]), .a(a[2]), .b(b[2]), .cin(c[1]));
     fulladd fa3 (.sum(sum[3]), .cout(cout), .a(a[3]), .b(b[3]), .cin(c[2]));
+
 endmodule
 
+
 // Skip Logic for carry-skip between blocks
-module SkipLogic(output cin_next, input [3:0] a, b, input cin, cout);
-    wire p0, p1, p2, p3, P, e;
+module SkipLogic(output wire cin_next, input wire [3:0] a, b, input wire cin, cout);
+
+    wire p0, p1, p2, p3, P, e;  // Declare internal wires explicitly
+    
     or (p0, a[0], b[0]);
     or (p1, a[1], b[1]);
     or (p2, a[2], b[2]);
     or (p3, a[3], b[3]);
+
     and (P, p0, p1, p2, p3);
     and (e, P, cin);
+    
     or (cin_next, e, cout);
+
 endmodule
 
-module fulladd(output sum, output cout, input a, b, cin);
+
+module fulladd(output wire sum, output wire cout, input wire a, b, cin);
+
     assign sum = a ^ b ^ cin;
     assign cout = (a & b) | (b & cin) | (a & cin);
+
 endmodule

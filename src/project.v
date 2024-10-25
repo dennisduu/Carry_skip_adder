@@ -75,3 +75,25 @@ module tt_um_carryskip_adder8 (
     assign uio_out = 8'b00000000;
     assign uio_oe = 8'b00000000;
 endmodule
+
+
+module ripplemod(a, b, cin, sum, cout);
+    input [3:0] a, b;
+    input cin;
+    output [3:0] sum;
+    output cout;
+
+    wire [2:0] c;
+    fulladd fa0(a[0], b[0], cin, sum[0], c[0]);
+    fulladd fa1(a[1], b[1], c[0], sum[1], c[1]);
+    fulladd fa2(a[2], b[2], c[1], sum[2], c[2]);
+    fulladd fa3(a[3], b[3], c[2], sum[3], cout);
+endmodule
+
+module fulladd(a, b, cin, sum, cout);
+    input a, b, cin;
+    output sum, cout;
+
+    assign sum = a ^ b ^ cin;
+    assign cout = (a & b) | (b & cin) | (a & cin);
+endmodule

@@ -28,8 +28,8 @@ module tb ();
   // Instantiate the design under test (DUT)
   tt_um_carryskip_adder8 user_project (
 `ifdef GL_TEST
-      .VPWR(1'b1),
-      .VGND(1'b0),
+      .VPWR(VPWR),
+    .VGND(VGND),
 `endif
       .ui_in  (ui_in),    // Dedicated inputs
       .uo_out (uo_out),   // Dedicated outputs

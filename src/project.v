@@ -74,7 +74,6 @@ module tt_um_carryskip_adder8 (
     assign carry_out = c7;
 
     assign uo_out[7:0] = sum;
-    assign uo_out[8] = carry_out;
     assign uio_out = 8'b00000000;
     assign uio_oe = 8'b00000000;
 endmodule

@@ -34,7 +34,7 @@ module tt_um_carryskip_adder8 (
     // Second 4-bit block (upper half)
     wire [3:0] sum_upper;
     wire c7; // Carry out from the upper block
-    wire skip_cin = p_lower ? c3 : cin; // Use skip logic for carry-in
+    wire skip_cin = p_lower ? cin : c3; // Corrected
     ripplemod ripple_upper (a[7:4], b[7:4], skip_cin, sum_upper, c7);
 
     // Register sum and apply reset logic

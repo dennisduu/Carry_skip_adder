@@ -36,10 +36,10 @@ endmodule
 
 `default_nettype none
 
-module tt_um_koggestone_adder4 (
-    input  wire [7:0] ui_in,    // Dedicated inputs
+module tt_um_carryskip_adder8 (
+    input  wire [7:0] ui_in,    // a input
     output wire [7:0] uo_out,   // Dedicated outputs
-    input  wire [7:0] uio_in,   // IOs: Input path
+    input  wire [7:0] uio_in,   // b input
     output wire [7:0] uio_out,  // IOs: Output path
     output wire [7:0] uio_oe,   // IOs: Enable path (active high: 0=input, 1=output)
     input  wire       ena,      // always 1 when the design is powered, so you can ignore it
@@ -47,49 +47,55 @@ module tt_um_koggestone_adder4 (
     input  wire       rst_n     // reset_n - low to reset
 );
 
-  wire [3:0] a, b;
-  wire [3:0] sum;
-  wire carry_out;
-  
-  assign a = ui_in[3:0];
-  assign b = ui_in[7:4];
-   
+    wire [7:0] a, b;
+    wire [7:0] sum;
+    wire carry_out;
+    wire cin = 0; // Initial carry-in is 0
 
-  wire [3:0] p; // Propagate
-  wire [3:0] g; // Generate
-  wire [3:0] c; // Carry
+    assign a = ui_in;         // 'a' input from ui_in
+    assign b = uio_in;        // 'b' input from uio_in
 
-  // Precompute generate and propagate signals
-  assign p = a ^ b; // Propagate
-  assign g = a & b; // Generate
+    // First 4-bit block (lower half)
+    wire [3:0] sum_lower;
+    wire c3; // Carry out from the lower block
+    ripplemod ripple_lower (a[3:0], b[3:0], cin, sum_lower, c3);
 
-  // Stage 1: Compute generate signals for neighbor 1-bit pairs
-  wire g1_1, g1_2, g1_3;
-  wire p1_1, p1_2, p1_3; 
-  assign g1_1 = g[1] | (p[1] & g[0]);   // Combine 1st and 0th bits
-  assign g1_2 = g[2] | (p[2] & g[1]);   // Combine 2nd and 1st bits
-  assign p1_2 = p[2] & p[1];	
-  assign g1_3 = g[3] | (p[3] & g[2]);   // Combine 3rd and 2nd bits
-  assign p1_3 = p[3] & p[2];
+    // Skip logic for lower 4-bit block
+    wire p_lower = & (a[3:0] ^ b[3:0]); // Propagate signal for lower block
 
-  // Stage 2: Compute generate signals for 2-bit groups
-  wire g2_2, g2_3;
-  assign g2_2 = g1_2 | (p1_2 & g[0]);   // Combine 2-bit group (2nd and 0th bits)
-  assign g2_3 = g1_3 | (p1_3 & g1_1);   // Combine 2-bit group (3rd and 1st bits)
+    // Second 4-bit block (upper half)
+    wire [3:0] sum_upper;
+    wire c7; // Carry out from the upper block
+    wire skip_cin = p_lower ? cin : c3; // Use skip logic for carry-in
+    ripplemod ripple_upper (a[7:4], b[7:4], skip_cin, sum_upper, c7);
 
-  // Compute final carry signals
-  assign c[0] = 0;                      // No carry into the first bit
-  assign c[1] = g[0];                   // Carry for 1st bit
-  assign c[2] = g1_1;                   // Carry for 2nd bit
-  assign c[3] = g2_2;                   // Carry for 3rd bit
-  assign carry_out = g2_3;              // Carry-out
+    // Assign the final outputs
+    assign sum = {sum_upper, sum_lower};
+    assign carry_out = c7;
 
-  // Sum computation
-  assign sum = p ^ c;                               // XOR of propagate and carry
+    assign uo_out[7:0] = sum;
+    assign uo_out[8] = carry_out;
+    assign uio_out = 8'b00000000;
+    assign uio_oe = 8'b00000000;
+endmodule
 
-  assign uo_out[3:0] = sum;
-  assign uo_out[4] = carry_out; 
-  assign uo_out[7:5] = 3'b000;
-  assign uio_out = 8'b00000000;
-  assign uio_oe = 8'b00000000;
+module ripplemod(a, b, cin, sum, cout);
+    input [3:0] a, b;
+    input cin;
+    output [3:0] sum;
+    output cout;
+
+    wire [2:0] c;
+    fulladd fa0(a[0], b[0], cin, sum[0], c[0]);
+    fulladd fa1(a[1], b[1], c[0], sum[1], c[1]);
+    fulladd fa2(a[2], b[2], c[1], sum[2], c[2]);
+    fulladd fa3(a[3], b[3], c[2], sum[3], cout);
+endmodule
+
+module fulladd(a, b, cin, sum, cout);
+    input a, b, cin;
+    output sum, cout;
+
+    assign sum = a ^ b ^ cin;
+    assign cout = (a & b) | (b & cin) | (a & cin);
 endmodule

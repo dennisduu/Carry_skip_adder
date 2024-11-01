@@ -16,9 +16,8 @@ This project implements an 8-bit carry-skip adder using a combination of ripple-
 To test the carry-skip adder:
 1. Load the design into your simulation environment.
 2. Set the `ui_in` and `uio_in` inputs with the desired 8-bit values for addition.
-3. Apply a reset signal to initialize the sum register.
-4. Provide a clock pulse, and the result of the addition will appear on `uo_out` after each rising edge.
-5. Verify that the output matches expected values by comparing `uo_out` with the sum of the inputs.
+3. The result of the addition will appear on `uo_out` after each rising edge.
+4. Verify that the output matches expected values by comparing `uo_out` with the sum of the inputs.
 
 For more extensive testing, a testbench can be used to automate input combinations and check results across various cases.
 

@@ -1,52 +1,44 @@
 import cocotb
-from cocotb.clock import Clock
-from cocotb.triggers import ClockCycles
 import random
 
 @cocotb.test()
-async def test_project(dut):
-    dut._log.info("Start")
+async def test_carryskip_adder8(dut):
+    # Initialize logging
+    dut._log.info("Starting testbench for 8-bit Carry-Skip Adder (Combinational)")
 
-    # Set the clock period to 10 us (100 KHz)
-    clock = Clock(dut.clk, 10, units="us")
-    cocotb.start_soon(clock.start())
-
-    # Reset
-    dut._log.info("Reset")
+    # Reset the DUT by setting `rst_n` low, then high
     dut.ena.value = 1
     dut.ui_in.value = 0
     dut.uio_in.value = 0
     dut.rst_n.value = 0
-    await ClockCycles(dut.clk, 10)  # Reset for 10 clock cycles
+    await cocotb.triggers.Timer(1, units="ns")  # Small delay to apply reset
     dut.rst_n.value = 1
-    await ClockCycles(dut.clk, 2)   # Ensure release of reset
+    await cocotb.triggers.Timer(1, units="ns")  # Small delay after reset release
 
-    dut._log.info("Starting random constrained tests")
+    dut._log.info("Beginning randomized testing for combinational logic")
 
     NUM_TESTS = 100  # Number of random tests to perform
 
-    for _ in range(NUM_TESTS):
-        # Generate random inputs such that their sum does not exceed 255 (no carry-out)
-        while True:
-            a = random.randint(0, 255)
-            b = random.randint(0, 255)
-            if a + b <= 255:
-                break
-
-        expected_sum = a + b
+    for i in range(NUM_TESTS):
+        # Generate random values for a and b such that their sum fits in 8 bits
+        a = random.randint(0, 255)
+        b = random.randint(0, 255)
 
         # Apply inputs to the DUT
         dut.ui_in.value = a
         dut.uio_in.value = b
 
-        # Wait for two clock cycles
-        await ClockCycles(dut.clk, 2)
+        # Allow time for combinational logic to settle
+        await cocotb.triggers.Timer(1, units="ns")  # Small delay for propagation
 
-        # Read and check the output
+        # Expected output
+        expected_sum = (a + b) & 0xFF  # Mask to 8-bit value
+
+        # Check the output
         actual_output = int(dut.uo_out.value)
         assert actual_output == expected_sum, \
-            f"For inputs {a} and {b}, expected {expected_sum} but got {actual_output}"
+            f"Test failed for inputs a={a}, b={b}. Expected sum={expected_sum}, got {actual_output}"
 
-        dut._log.info(f"Test passed for inputs {a} and {b}, output {actual_output}")
+        dut._log.info(f"Test {i+1}/{NUM_TESTS} passed for inputs a={a}, b={b}, output {actual_output}")
 
-    dut._log.info("All random constrained tests passed")
+    dut._log.info("All randomized tests completed successfully")

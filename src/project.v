@@ -1,8 +1,3 @@
-/*
- * Copyright (c) 2024 Weihua Xiao
- * SPDX-License-Identifier: Apache-2.0
- */
-
 `default_nettype none
 
 module tt_um_carryskip_adder8 (
@@ -17,7 +12,7 @@ module tt_um_carryskip_adder8 (
 );
 
     wire [7:0] a, b;
-    reg [7:0] sum;
+    wire [7:0] sum; // Changed to wire for combinational assignment
     wire cin = 0; // Initial carry-in is 0
 
     assign a = ui_in;         // 'a' input from ui_in
@@ -34,15 +29,14 @@ module tt_um_carryskip_adder8 (
     // Second 4-bit block (upper half)
     wire [3:0] sum_upper;
     wire c7; // Carry out from the upper block
-    wire skip_cin = p_lower ? cin : c3; // Corrected
+    wire skip_cin = p_lower ? cin : c3; // Skip logic to decide carry-in
     ripplemod ripple_upper (a[7:4], b[7:4], skip_cin, sum_upper, c7);
 
-    // Register sum and apply reset logic
-    always @(posedge clk) begin
-        sum <= {sum_upper, sum_lower};
-    end
+    // Combinational assignment for sum
+    assign sum = {sum_upper, sum_lower};
 
-    assign uo_out = sum;      // Assign the sum to output
+    // Assign the result to the output
+    assign uo_out = sum;      
     assign uio_out = 8'b00000000;
     assign uio_oe = 8'b00000000;
 endmodule

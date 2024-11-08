@@ -38,11 +38,8 @@ module tt_um_carryskip_adder8 (
     ripplemod ripple_upper (a[7:4], b[7:4], skip_cin, sum_upper, c7);
 
     // Register sum and apply reset logic
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n)
-            sum <= 8'b0;  // Reset sum to 0
-        else
-            sum <= {sum_upper, sum_lower};
+    always @(posedge clk) begin
+        sum <= {sum_upper, sum_lower};
     end
 
     assign uo_out = sum;      // Assign the sum to output

@@ -19,12 +19,6 @@ module tb ();
   wire [7:0] uio_out;
   wire [7:0] uio_oe;
 
-  // Clock generation
-  initial begin
-    clk = 0;
-    forever #10 clk = ~clk; // 100 MHz clock
-  end
-
   // Declare power supply signals
   supply1 VPWR;
   supply0 VGND;
